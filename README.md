@@ -17,12 +17,10 @@ Ce projet démontre la mise en œuvre d'une architecture microservices sur Kuber
 
 ```mermaid
 flowchart TB
-    Client[Client HTTPS] --> DNS[workshop.local]
-    DNS --> Ingress[Ingress NGINX Controller]
+    Client[Client HTTPS] --> Ingress[Ingress NGINX<br/>TLS Termination]
     
-    Ingress -->|TLS Termination| Ingress
-    Ingress -->|/front| SvcFront[Service front<br/>ClusterIP:80]
-    Ingress -->|/api| SvcApi[Service api<br/>ClusterIP:80]
+    Ingress -->|/front| SvcFront[Service front:80]
+    Ingress -->|/api| SvcApi[Service api:80]
     
     SvcFront --> PodFront1[Pod front-1]
     SvcFront --> PodFront2[Pod front-2]
@@ -30,20 +28,9 @@ flowchart TB
     SvcApi --> PodApi1[Pod api-1]
     SvcApi --> PodApi2[Pod api-2]
     
-    CertManager[cert-manager] -.Génère certificat.-> Secret[Secret web-tls]
-    Secret -.Utilisé par.-> Ingress
-    
-    ConfigMap[ConfigMap<br/>front-config] -.BANNER_TEXT.-> PodFront1
-    ConfigMap -.BANNER_TEXT.-> PodFront2
-    
-    SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
-    SecretApp -.DB_USER/DB_PASS.-> PodApi2
-    
-    style Ingress fill:#f9a,stroke:#333,stroke-width:3px
-    style CertManager fill:#9cf,stroke:#333,stroke-width:2px
-    style Secret fill:#fcf,stroke:#333,stroke-width:2px
-    style ConfigMap fill:#cfc,stroke:#333,stroke-width:2px
-    style SecretApp fill:#fcc,stroke:#333,stroke-width:2px
+    CertManager[cert-manager] -.->|certificat| Ingress
+    ConfigMap[ConfigMap] -.->|BANNER_TEXT| SvcFront
+    SecretApp[Secret] -.->|DB credentials| SvcApi
 ```
 
 **Pour plus de détails** : Voir [ARCHITECTURE.md](ARCHITECTURE.md) (diagrammes de séquence, flux L7, comparaisons L4/L7, stratégie de rollback).
