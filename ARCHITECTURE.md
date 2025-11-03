@@ -11,11 +11,11 @@ flowchart TB
     Ingress -->|/front| SvcFront[Service front<br/>ClusterIP:80]
     Ingress -->|/api| SvcApi[Service api<br/>ClusterIP:80]
     
-    SvcFront --> PodFront1[Pod front-1<br/>nginx:plain-text]
-    SvcFront --> PodFront2[Pod front-2<br/>nginx:plain-text]
+    SvcFront --> PodFront1[Pod front-1]
+    SvcFront --> PodFront2[Pod front-2]
     
-    SvcApi --> PodApi1[Pod api-1<br/>httpbin]
-    SvcApi --> PodApi2[Pod api-2<br/>httpbin]
+    SvcApi --> PodApi1[Pod api-1]
+    SvcApi --> PodApi2[Pod api-2]
     
     CertManager[cert-manager] -.Génère certificat.-> Secret[Secret web-tls]
     Secret -.Utilisé par.-> Ingress
@@ -26,11 +26,11 @@ flowchart TB
     SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
     SecretApp -.DB_USER/DB_PASS.-> PodApi2
     
-    style Ingress fill:#f9a,stroke:#333,stroke-width:3px
-    style CertManager fill:#9cf,stroke:#333,stroke-width:2px
-    style Secret fill:#fcf,stroke:#333,stroke-width:2px
-    style ConfigMap fill:#cfc,stroke:#333,stroke-width:2px
-    style SecretApp fill:#fcc,stroke:#333,stroke-width:2px
+    style Ingress fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
+    style CertManager fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style Secret fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style ConfigMap fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style SecretApp fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ---
@@ -61,17 +61,17 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[Client HTTPS<br/>Encrypted] --> B{Ingress NGINX<br/>TLS Termination}
-    B --> C[Service front<br/>HTTP - Unencrypted]
-    B --> D[Service api<br/>HTTP - Unencrypted]
+    A[Client HTTPS<br/>Chiffré] --> B{Ingress NGINX<br/>TLS Termination}
+    B --> C[Service front<br/>HTTP]
+    B --> D[Service api<br/>HTTP]
     
     E[Secret web-tls<br/>Certificat + Clé] -.Utilisé pour TLS.-> B
     
-    style A fill:#fcc,stroke:#333,stroke-width:2px
-    style B fill:#f9a,stroke:#333,stroke-width:3px
-    style C fill:#cfc,stroke:#333,stroke-width:2px
-    style D fill:#cfc,stroke:#333,stroke-width:2px
-    style E fill:#fcf,stroke:#333,stroke-width:2px
+    style A fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
+    style C fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -99,10 +99,10 @@ flowchart TB
     E --> F[Secret<br/>web-tls]
     F --> G[Ingress Controller<br/>Utilise le certificat]
     
-    style A fill:#9cf,stroke:#333,stroke-width:2px
-    style C fill:#9cf,stroke:#333,stroke-width:3px
-    style F fill:#fcf,stroke:#333,stroke-width:2px
-    style G fill:#f9a,stroke:#333,stroke-width:2px
+    style A fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#bae1ff,stroke:#333,stroke-width:3px,color:#000
+    style F fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style G fill:#ffb3ba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Processus :**
@@ -133,8 +133,8 @@ flowchart TB
     SvcApi -->|Round-robin| P3[Pod api-1<br/>10.244.0.20:80]
     SvcApi -->|Round-robin| P4[Pod api-2<br/>10.244.0.21:80]
     
-    style SvcFront fill:#cfc,stroke:#333,stroke-width:2px
-    style SvcApi fill:#cfc,stroke:#333,stroke-width:2px
+    style SvcFront fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style SvcApi fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -152,10 +152,10 @@ flowchart LR
     
     S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
     
-    style CM fill:#cfc,stroke:#333,stroke-width:2px
-    style S fill:#fcc,stroke:#333,stroke-width:2px
-    style PF fill:#fff,stroke:#333,stroke-width:2px
-    style PA fill:#fff,stroke:#333,stroke-width:2px
+    style CM fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style S fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
+    style PF fill:#fff,stroke:#333,stroke-width:2px,color:#000
+    style PA fill:#fff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **ConfigMap (données non sensibles) :**
@@ -284,7 +284,7 @@ flowchart TB
         D2 --> P3
         D2 --> P4
         D2 --> P5
-        Note1[ERREUR: Nouveaux pods ne démarrent pas<br/>OK: Anciens pods restent actifs]
+        Note1[Nouveaux pods ne démarrent pas<br/>Anciens pods restent actifs]
     end
     
     subgraph Après Rollback
@@ -293,14 +293,14 @@ flowchart TB
         P7[Pod front-2<br/>Image: nginx:1.0]
         D3 --> P6
         D3 --> P7
-        Note2[OK: Retour à la version stable]
+        Note2[Retour à la version stable]
     end
     
     Avant --> Pendant
     Pendant --> Après
     
-    style Note1 fill:#fcc,stroke:#333,stroke-width:2px
-    style Note2 fill:#cfc,stroke:#333,stroke-width:2px
+    style Note1 fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style Note2 fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Commandes :**
@@ -326,9 +326,12 @@ kubectl rollout undo deployment/front -n workshop --to-revision=1
 
 ```mermaid
 flowchart TB
-    subgraph Namespace workshop
-        direction TB
-        Ingress[Ingress web]
+    External[External Traffic] --> NSIngress[ingress-nginx namespace]
+    NSIngress --> Ingress[Ingress Controller]
+    
+    Ingress --> NSWorkshop[workshop namespace]
+    
+    subgraph NSWorkshop
         SvcF[Service front]
         SvcA[Service api]
         PF1[Pod front-1]
@@ -338,8 +341,6 @@ flowchart TB
         CM[ConfigMap]
         S[Secret]
         
-        Ingress --> SvcF
-        Ingress --> SvcA
         SvcF --> PF1
         SvcF --> PF2
         SvcA --> PA1
@@ -350,19 +351,11 @@ flowchart TB
         S -.-> PA2
     end
     
-    subgraph Cluster
-        NS1[Namespace: workshop]
-        NS2[Namespace: ingress-nginx]
-        NS3[Namespace: cert-manager]
-    end
+    NSCert[cert-manager namespace] -.certificats.-> NSWorkshop
     
-    External[External Traffic] --> NS2
-    NS2 --> NS1
-    NS3 -.Gère certificats.-> NS1
-    
-    style NS1 fill:#cfc,stroke:#333,stroke-width:2px
-    style NS2 fill:#f9a,stroke:#333,stroke-width:2px
-    style NS3 fill:#9cf,stroke:#333,stroke-width:2px
+    style NSWorkshop fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
+    style NSIngress fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style NSCert fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Points de sécurité :**
