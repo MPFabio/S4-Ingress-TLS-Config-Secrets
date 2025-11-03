@@ -6,18 +6,20 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: selfsigned
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   tls:
   - hosts: ["workshop.local"]
     secretName: web-tls
   rules:
-  - http:
+  - host: workshop.local
+    http:
       paths:
-      - path: /front
-        pathType: Prefix
+      - path: /front(/|$)(.*)
+        pathType: ImplementationSpecific
         backend: { service: { name: front, port: { number: 80 } } }
-      - path: /api
-        pathType: Prefix
+      - path: /api(/|$)(.*)
+        pathType: ImplementationSpecific
         backend: { service: { name: api, port: { number: 80 } } }
 ---
