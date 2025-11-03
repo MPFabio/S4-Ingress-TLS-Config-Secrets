@@ -5,10 +5,11 @@
 ```mermaid
 flowchart TB
     Client[Client HTTPS] --> DNS[workshop.local]
-    DNS --> Ingress[Ingress NGINX<br/>TLS Termination]
+    DNS --> Ingress[Ingress NGINX Controller]
     
-    Ingress -->|/front| SvcFront[Service front:80]
-    Ingress -->|/api| SvcApi[Service api:80]
+    Ingress -->|TLS Termination| Ingress
+    Ingress -->|/front| SvcFront[Service front<br/>ClusterIP:80]
+    Ingress -->|/api| SvcApi[Service api<br/>ClusterIP:80]
     
     SvcFront --> PodFront1[Pod front-1]
     SvcFront --> PodFront2[Pod front-2]
@@ -16,9 +17,20 @@ flowchart TB
     SvcApi --> PodApi1[Pod api-1]
     SvcApi --> PodApi2[Pod api-2]
     
-    CertManager[cert-manager] -.certificat.-> Ingress
-    ConfigMap[ConfigMap] -.BANNER_TEXT.-> SvcFront
-    SecretApp[Secret] -.credentials.-> SvcApi
+    CertManager[cert-manager] -.Génère certificat.-> Secret[Secret web-tls]
+    Secret -.Utilisé par.-> Ingress
+    
+    ConfigMap[ConfigMap<br/>front-config] -.BANNER_TEXT.-> PodFront1
+    ConfigMap -.BANNER_TEXT.-> PodFront2
+    
+    SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
+    SecretApp -.DB_USER/DB_PASS.-> PodApi2
+    
+    style Ingress fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
+    style CertManager fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style Secret fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style ConfigMap fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style SecretApp fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ---
@@ -49,11 +61,17 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[Client HTTPS<br/>Chiffré] --> B[Ingress NGINX<br/>TLS Termination]
-    B --> C[Service front:80<br/>HTTP]
-    B --> D[Service api:80<br/>HTTP]
+    A[Client HTTPS<br/>Chiffré] --> B{Ingress NGINX<br/>TLS Termination}
+    B --> C[Service front<br/>HTTP]
+    B --> D[Service api<br/>HTTP]
     
-    E[Secret web-tls] -.certificat TLS.-> B
+    E[Secret web-tls<br/>Certificat + Clé] -.Utilisé pour TLS.-> B
+    
+    style A fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
+    style C fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -74,12 +92,17 @@ Host: workshop.local
 
 ```mermaid
 flowchart TB
-    A[ClusterIssuer selfsigned] --> B[Ingress]
-    B --> C[cert-manager]
+    A[ClusterIssuer<br/>selfsigned] --> B[Ingress<br/>annotation: cert-manager.io/cluster-issuer]
+    B --> C{cert-manager<br/>Controller}
     C --> D[CertificateRequest]
-    D --> E[Certificate web-tls]
-    E --> F[Secret web-tls]
-    F --> G[Ingress Controller]
+    D --> E[Certificate<br/>web-tls]
+    E --> F[Secret<br/>web-tls]
+    F --> G[Ingress Controller<br/>Utilise le certificat]
+    
+    style A fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#bae1ff,stroke:#333,stroke-width:3px,color:#000
+    style F fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style G fill:#ffb3ba,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Processus :**
@@ -101,14 +124,17 @@ kubectl get certificate,certificaterequest,secret -n workshop
 
 ```mermaid
 flowchart TB
-    Ingress[Ingress] -->|app=front| SvcFront[Service front]
-    Ingress -->|app=api| SvcApi[Service api]
+    Ingress[Ingress] -->|Selector: app=front| SvcFront[Service front]
+    Ingress -->|Selector: app=api| SvcApi[Service api]
     
-    SvcFront -->|round-robin| P1[Pod front-1]
-    SvcFront -->|round-robin| P2[Pod front-2]
+    SvcFront -->|Round-robin| P1[Pod front-1<br/>10.244.0.10:80]
+    SvcFront -->|Round-robin| P2[Pod front-2<br/>10.244.0.11:80]
     
-    SvcApi -->|round-robin| P3[Pod api-1]
-    SvcApi -->|round-robin| P4[Pod api-2]
+    SvcApi -->|Round-robin| P3[Pod api-1<br/>10.244.0.20:80]
+    SvcApi -->|Round-robin| P4[Pod api-2<br/>10.244.0.21:80]
+    
+    style SvcFront fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style SvcApi fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -122,8 +148,14 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    CM[ConfigMap<br/>BANNER_TEXT] -.valueFrom.-> PF[Pod front]
-    S[Secret<br/>DB_USER, DB_PASS] -.secretKeyRef.-> PA[Pod api]
+    CM[ConfigMap<br/>front-config<br/>BANNER_TEXT: "Hello M2 IR"] -.valueFrom.-> PF[Pod front<br/>ENV: BANNER_TEXT]
+    
+    S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
+    
+    style CM fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style S fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
+    style PF fill:#fff,stroke:#333,stroke-width:2px,color:#000
+    style PA fill:#fff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **ConfigMap (données non sensibles) :**
@@ -252,7 +284,7 @@ flowchart TB
         D2 --> P3
         D2 --> P4
         D2 --> P5
-        Note1[Nouveaux pods: ImagePullBackOff<br/>Anciens pods: Running]
+        Note1[Nouveaux pods ne démarrent pas<br/>Anciens pods restent actifs]
     end
     
     subgraph Après Rollback
@@ -266,6 +298,9 @@ flowchart TB
     
     Avant --> Pendant
     Pendant --> Après
+    
+    style Note1 fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style Note2 fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Commandes :**
@@ -317,6 +352,10 @@ flowchart TB
     end
     
     NSCert[cert-manager namespace] -.certificats.-> NSWorkshop
+    
+    style NSWorkshop fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
+    style NSIngress fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
+    style NSCert fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **Points de sécurité :**
