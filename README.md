@@ -1,216 +1,167 @@
-# TP S4 — Ingress, TLS, Config & Secrets
+# TP S5 — Persistance & Workloads avec état
 
-Déploiement d'applications web avec Ingress NGINX, gestion TLS via cert-manager, et injection de configuration via ConfigMaps et Secrets.
+Déploiement PostgreSQL avec StatefulSet, provisionnement dynamique de volumes (PVC), et stratégie de backup/restore.
 
 ## Description
 
-Ce projet démontre la mise en œuvre d'une architecture microservices sur Kubernetes avec :
-- Exposition de services via Ingress Controller (routage L7)
-- Sécurisation TLS avec certificats auto-signés (cert-manager)
-- Gestion de configuration non sensible (ConfigMap)
-- Gestion de données sensibles (Secret)
-- Stratégie de rollback pour les déploiements
+Mise en œuvre de :
+- StatefulSet pour applications avec état
+- Provisionnement dynamique de volumes (PV/PVC/StorageClass)
+- Service headless pour identité réseau stable
+- Backup et restore PostgreSQL (pg_dumpall)
 
 ## Architecture
 
-### Vue d'ensemble
-
 ```mermaid
 flowchart TB
-    Client[Client HTTPS] --> Ingress[Ingress NGINX<br/>TLS Termination]
+    StatefulSet[StatefulSet postgres] --> Pod[Pod postgres-0]
+    Pod --> PVC[PVC data-postgres-0<br/>8Gi]
+    PVC --> PV[PV<br/>provisionné automatiquement]
     
-    Ingress -->|/front| SvcFront[Service front:80]
-    Ingress -->|/api| SvcApi[Service api:80]
+    Service[Service headless<br/>clusterIP: None] -.DNS stable.-> Pod
+    Secret[Secret pg-secret] -.credentials.-> Pod
     
-    SvcFront --> PodFront1[Pod front-1]
-    SvcFront --> PodFront2[Pod front-2]
+    StorageClass[StorageClass standard] -.template.-> PVC
     
-    SvcApi --> PodApi1[Pod api-1]
-    SvcApi --> PodApi2[Pod api-2]
-    
-    CertManager[cert-manager] -.->|certificat| Ingress
-    ConfigMap[ConfigMap] -.->|BANNER_TEXT| SvcFront
-    SecretApp[Secret] -.->|DB credentials| SvcApi
+    style StatefulSet fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style Service fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style PVC fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
 ```
 
-**Pour plus de détails** : Voir [ARCHITECTURE.md](ARCHITECTURE.md) (diagrammes de séquence, flux L7, comparaisons L4/L7, stratégie de rollback).
-
-### Composants déployés
-
-- **Front** : Application NGINX de démonstration (nginxdemos/hello)
-- **API** : Service HTTP de test (kennethreitz/httpbin)
-- **Ingress Controller** : NGINX Ingress Controller
-- **cert-manager** : Gestionnaire automatique de certificats TLS
-- **ClusterIssuer** : Émetteur de certificats auto-signés
+Voir [RUNBOOK.md](RUNBOOK.md) pour la documentation technique détaillée.
 
 ## Prérequis
 
-- Cluster Kubernetes (kind / minikube / k3d ou managé)
+- Cluster Kubernetes avec StorageClass disponible
 - kubectl
-- Ingress NGINX Controller installé
-- cert-manager installé
+- Namespace `workshop`
 
 ## Déploiement rapide
 
-### Option A : Utiliser le script automatique
-
 ```bash
-./deploy.sh
+./deploy-postgres.sh
 ```
 
-Le script s'occupe de tout : namespace, configmap, secrets, applications, ingress.
+Le script installe PostgreSQL avec volume persistant dynamique.
 
-### Option B : Déploiement manuel
-
-#### 1. Créer le cluster (exemple avec kind)
+## Déploiement manuel
 
 ```bash
-kind create cluster --name workshop
-```
-
-#### 2. Installer les dépendances
-
-```bash
-# Ingress NGINX Controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
-# cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
-
-# Attendre que les controllers soient prêts
-kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
-kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.kubernetes.io/instance=cert-manager --timeout=120s
-```
-
-#### 3. Déployer l'application
-
-```bash
-kubectl apply -f namespaces.yaml
-kubectl apply -f configmap.yaml
-kubectl apply -f secrets.yaml
-kubectl apply -f certmanager.yaml
-kubectl apply -f front.yaml
-kubectl apply -f api.yaml
-kubectl apply -f ingress.yaml
-
-# Attendre que les pods soient prêts
-kubectl wait --for=condition=ready pod -n workshop --all --timeout=120s
+kubectl apply -f manifests/postgres/postgres-secret.yaml
+kubectl apply -f manifests/postgres/postgres-service.yaml
+kubectl apply -f manifests/postgres/postgres-statefulset.yaml
+kubectl wait --for=condition=ready pod -l app=postgres -n workshop --timeout=120s
 ```
 
 ## Accès
 
-Ajouter `127.0.0.1 workshop.local` dans votre fichier hosts :
-- **Linux/Mac** : `/etc/hosts`
-- **Windows** : `C:\Windows\System32\drivers\etc\hosts`
+```bash
+POD=$(kubectl -n workshop get po -l app=postgres -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $POD -n workshop -- psql -U postgres
+```
 
-Accès HTTP :
-- Front : http://workshop.local:8080/front
-- API : http://workshop.local:8080/api/headers
+## Opérations
 
-Accès HTTPS :
-- Front : https://workshop.local:8443/front
-- API : https://workshop.local:8443/api/headers
+### Backup
 
-Note : Accepter le certificat auto-signé dans le navigateur.
+```bash
+./backup.sh
+```
 
-## Structure du projet
+Sauvegarde dans `./backups/postgres-backup-YYYY-MM-DD_HH-MM-SS.sql.gz`
 
-### Manifests Kubernetes
+### Restore
 
-- `namespaces.yaml` - Namespace workshop
-- `configmap.yaml` - Configuration non sensible (BANNER_TEXT)
-- `secrets.yaml` - Credentials (DB_USER, DB_PASS)
-- `certmanager.yaml` - ClusterIssuer self-signed
-- `front.yaml` - Deployment + Service front
-- `api.yaml` - Deployment + Service api
-- `ingress.yaml` - Ingress avec routage L7 et TLS
+```bash
+./restore.sh ./backups/postgres-backup-2024-11-04_10-30-00.sql.gz
+```
+
+### Test de persistance
+
+```bash
+./test-postgres.sh
+```
+
+## Structure
+
+### Manifests
+
+- `manifests/postgres/postgres-secret.yaml` - Credentials PostgreSQL
+- `manifests/postgres/postgres-service.yaml` - Service headless (clusterIP: None)
+- `manifests/postgres/postgres-statefulset.yaml` - StatefulSet avec volumeClaimTemplates
 
 ### Scripts
 
-- `deploy.sh` - Déploiement automatique (installe kind/kubectl/helm si nécessaire)
-- `cleanup.sh` - Suppression des ressources
+- `deploy-postgres.sh` - Déploiement automatique
+- `backup.sh` - Backup via pg_dumpall
+- `restore.sh` - Restore depuis backup
+- `test-postgres.sh` - Tests de persistance
 
 ### Documentation
 
-- `INSTALL.md` - Instructions détaillées d'installation et configuration
-- `ARCHITECTURE.md` - Diagrammes techniques et flux L7
+- `RUNBOOK.md` - Procédures techniques complètes
 
-## Ressources injectées
+## Concepts clés
 
-### ConfigMap (front-config)
+### StatefulSet vs Deployment
+
+| Aspect | StatefulSet | Deployment |
+|--------|-------------|------------|
+| Identité pods | Stable (postgres-0) | Aléatoire |
+| DNS | Par pod | Service uniquement |
+| Volumes | PVC dédié par pod | Partagé ou aucun |
+| Ordre démarrage | Séquentiel | Parallèle |
+
+### Provisionnement dynamique
+
+1. StorageClass définit le template de provisionnement
+2. PVC demande un volume (via volumeClaimTemplates)
+3. Kubernetes crée automatiquement le PV
+4. Association PVC ↔ PV automatique
+
+### Service Headless
+
 ```yaml
-BANNER_TEXT: "Hello M2 IR"
+clusterIP: None
 ```
 
-### Secret (app-secrets)
-```yaml
-DB_USER: app
-DB_PASS: changeMe123
-```
-
-Les variables sont injectées dans les pods via `valueFrom` (configMapKeyRef / secretKeyRef).
-
-## Tests de rollback
-
-Simuler un déploiement défectueux :
-```bash
-kubectl set image deployment/front front=nginx:broken -n workshop
-kubectl rollout status deployment/front -n workshop
-```
-
-Effectuer le rollback :
-```bash
-kubectl rollout undo deployment/front -n workshop
-kubectl rollout status deployment/front -n workshop
-```
+Crée DNS stable : `postgres-0.postgres.workshop.svc.cluster.local`
 
 ## Vérifications
 
 ```bash
 # État des ressources
-kubectl get all -n workshop
+kubectl get statefulset,pod,svc,pvc,pv -n workshop -l app=postgres
 
-# Certificat TLS
-kubectl get certificate,secret -n workshop
+# Connexion PostgreSQL
+kubectl exec postgres-0 -n workshop -- psql -U postgres -c '\l'
 
-# Logs Ingress
-kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=50
-
-# Tests
-curl -k https://workshop.local:8443/front
-curl -k https://workshop.local:8443/api/headers
+# Espace disque
+kubectl exec postgres-0 -n workshop -- df -h /var/lib/postgresql/data
 ```
-
-## Livrables
-
-- Manifests Kubernetes fonctionnels
-- Ingress avec TLS opérationnel
-- ConfigMap et Secret configurés
-- Diagramme d'architecture (ARCHITECTURE.md)
-- Documentation technique complète
 
 ## Nettoyage
 
 ```bash
-# Supprimer le namespace
-kubectl delete namespace workshop
+# Supprimer PostgreSQL (conserve le PVC)
+kubectl delete statefulset postgres -n workshop
+kubectl delete service postgres -n workshop
 
-# Supprimer le cluster kind
-kind delete cluster --name workshop
+# Supprimer le PVC (perte de données)
+kubectl delete pvc data-postgres-0 -n workshop
 ```
 
-## Documentation
+## Livrables
 
-- **INSTALL.md** : Instructions d'installation et configuration
-- **ARCHITECTURE.md** : Diagrammes et explications techniques
+- Manifests StatefulSet PostgreSQL avec PVC dynamique
+- Service headless configuré
+- Runbook backup/restore opérationnel
+- Scripts d'automatisation
+- Documentation technique
 
 ## Évaluation (10 pts)
 
-- Ingress + TLS : 4 pts
-- Config/Secret : 3 pts
-- Rollback démontré : 2 pts
+- StatefulSet + PVC : 5 pts
+- Backup : 3 pts
+- Restore : 1 pt
 - Documentation : 1 pt
-
-## Auteur
-
-TP S4 - M2 IR - Ingress, TLS, Config & Secrets

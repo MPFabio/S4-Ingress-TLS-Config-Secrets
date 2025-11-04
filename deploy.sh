@@ -151,29 +151,29 @@ echo ""
 
 # Déployer le namespace
 echo "[Étape 4] Création du namespace workshop..."
-kubectl apply -f namespaces.yaml
+kubectl apply -f manifests/ingress/namespaces.yaml
 echo ""
 
 # Déployer ConfigMap et Secrets
 echo "[Étape 5] Déploiement des ConfigMap et Secrets..."
-kubectl apply -f configmap.yaml
-kubectl apply -f secrets.yaml
+kubectl apply -f manifests/ingress/configmap.yaml
+kubectl apply -f manifests/ingress/secrets.yaml
 echo ""
 
 # Déployer le ClusterIssuer
 echo "[Étape 6] Déploiement du ClusterIssuer..."
-kubectl apply -f certmanager.yaml
+kubectl apply -f manifests/ingress/certmanager.yaml
 echo ""
 
 # Déployer les applications
 echo "[Étape 7] Déploiement des applications (front + api)..."
-kubectl apply -f front.yaml
-kubectl apply -f api.yaml
+kubectl apply -f manifests/ingress/front.yaml
+kubectl apply -f manifests/ingress/api.yaml
 echo ""
 
 # Déployer l'Ingress
 echo "[Étape 8] Déploiement de l'Ingress..."
-kubectl apply -f ingress.yaml
+kubectl apply -f manifests/ingress/ingress.yaml
 echo ""
 
 # Attendre que les pods soient prêts
