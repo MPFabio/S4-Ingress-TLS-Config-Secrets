@@ -29,16 +29,8 @@ flowchart TB
     style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:4px,color:#000
     style CertManager fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
     style Secret fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
-    style ConfigMap fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
-    style SecretApp fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
-    style Client fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
-    style DNS fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
-    style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
-    style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
-    style PodFront1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PodFront2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PodApi1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PodApi2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style ConfigMap fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SecretApp fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 ---
@@ -108,12 +100,9 @@ flowchart TB
     F --> G[Ingress Controller<br/>Utilise le certificat]
     
     style A fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
-    style C fill:#4ECDC4,stroke:#2C3E50,stroke-width:4px,color:#000
+    style C fill:#9cf,stroke:#333,stroke-width:3px
     style F fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
-    style G fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
-    style B fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
-    style D fill:#FFF59D,stroke:#2C3E50,stroke-width:2px,color:#000
-    style E fill:#FFD54F,stroke:#2C3E50,stroke-width:2px,color:#000
+    style G fill:#f9a,stroke:#333,stroke-width:2px
 ```
 
 **Processus :**
@@ -146,11 +135,6 @@ flowchart TB
     
     style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
     style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
-    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
-    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P3 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -168,10 +152,10 @@ flowchart LR
     
     S["Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123"] -.secretKeyRef.-> PA["Pod api<br/>ENV: DB_USER, DB_PASS"]
     
-    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
-    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
-    style PF fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
-    style PA fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
+    style CM fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style S fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PF fill:#fff,stroke:#333,stroke-width:2px
+    style PA fill:#fff,stroke:#333,stroke-width:2px
 ```
 
 **ConfigMap (données non sensibles) :**
@@ -316,17 +300,7 @@ flowchart TB
     Pendant --> Après
     
     style Note1 fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
-    style Note2 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
-    style D1 fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
-    style D2 fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
-    style D3 fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P3 fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P5 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P6 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style P7 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style Note2 fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Commandes :**
@@ -386,19 +360,9 @@ flowchart TB
     NS2 --> NS1
     NS3 -.Gère certificats.-> NS1
     
-    style NS1 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
-    style NS2 fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS1 fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS2 fill:#f9a,stroke:#333,stroke-width:2px
     style NS3 fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
-    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
-    style SvcF fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
-    style SvcA fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PF1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PF2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PA1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style PA2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
-    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
-    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
-    style External fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Points de sécurité :**
