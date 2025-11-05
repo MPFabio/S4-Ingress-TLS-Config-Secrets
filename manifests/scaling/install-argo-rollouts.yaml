@@ -1,0 +1,19 @@
+# Installation Argo Rollouts via kubectl
+# Source: https://github.com/argoproj/argo-rollouts/releases
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-rollouts
+---
+# Les CRDs et le controller seront installés via :
+# kubectl create namespace argo-rollouts
+# kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+
+# Pour installer le plugin kubectl :
+# curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+# chmod +x kubectl-argo-rollouts-linux-amd64
+# sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+
+
+

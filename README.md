@@ -1,229 +1,232 @@
-# TP S4 — Ingress, TLS, Config & Secrets
+# TP Kubernetes - Ingress, TLS, Persistence, Scalabilité & Observabilité
 
-Déploiement d'applications web avec Ingress NGINX, gestion TLS via cert-manager, et injection de configuration via ConfigMaps et Secrets.
-
-## Description
-
-Ce projet démontre la mise en œuvre d'une architecture microservices sur Kubernetes avec :
-- Exposition de services via Ingress Controller (routage L7)
-- Sécurisation TLS avec certificats auto-signés (cert-manager)
-- Gestion de configuration non sensible (ConfigMap)
-- Gestion de données sensibles (Secret)
-- Stratégie de rollback pour les déploiements
-
-## Architecture
-
-### Vue d'ensemble
-
-```mermaid
-flowchart TB
-    Client[Client HTTPS] --> DNS[workshop.local]
-    DNS --> Ingress[Ingress NGINX Controller]
-    
-    Ingress -->|TLS Termination| Ingress
-    Ingress -->|/front| SvcFront[Service front<br/>ClusterIP:80]
-    Ingress -->|/api| SvcApi[Service api<br/>ClusterIP:80]
-    
-    SvcFront --> PodFront1[Pod front-1]
-    SvcFront --> PodFront2[Pod front-2]
-    
-    SvcApi --> PodApi1[Pod api-1]
-    SvcApi --> PodApi2[Pod api-2]
-    
-    CertManager[cert-manager] -.Génère certificat.-> Secret[Secret web-tls]
-    Secret -.Utilisé par.-> Ingress
-    
-    ConfigMap[ConfigMap<br/>front-config] -.BANNER_TEXT.-> PodFront1
-    ConfigMap -.BANNER_TEXT.-> PodFront2
-    
-    SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
-    SecretApp -.DB_USER/DB_PASS.-> PodApi2
-    
-    style Ingress fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
-    style CertManager fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
-    style Secret fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
-    style ConfigMap fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style SecretApp fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
-```
-
-**Pour plus de détails** : Voir [ARCHITECTURE.md](ARCHITECTURE.md) (diagrammes de séquence, flux L7, comparaisons L4/L7, stratégie de rollback).
-
-### Composants déployés
-
-- **Front** : Application NGINX de démonstration (nginxdemos/hello)
-- **API** : Service HTTP de test (kennethreitz/httpbin)
-- **Ingress Controller** : NGINX Ingress Controller
-- **cert-manager** : Gestionnaire automatique de certificats TLS
-- **ClusterIssuer** : Émetteur de certificats auto-signés
-
-## Prérequis
-
-- Cluster Kubernetes (kind / minikube / k3d ou managé)
-- kubectl
-- Ingress NGINX Controller installé
-- cert-manager installé
-
-## Déploiement rapide
-
-### Option A : Utiliser le script automatique
-
-```bash
-./deploy.sh
-```
-
-Le script s'occupe de tout : namespace, configmap, secrets, applications, ingress.
-
-### Option B : Déploiement manuel
-
-#### 1. Créer le cluster (exemple avec kind)
-
-```bash
-kind create cluster --name workshop
-```
-
-#### 2. Installer les dépendances
-
-```bash
-# Ingress NGINX Controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-
-# cert-manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
-
-# Attendre que les controllers soient prêts
-kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=120s
-kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.kubernetes.io/instance=cert-manager --timeout=120s
-```
-
-#### 3. Déployer l'application
-
-```bash
-kubectl apply -f namespaces.yaml
-kubectl apply -f configmap.yaml
-kubectl apply -f secrets.yaml
-kubectl apply -f certmanager.yaml
-kubectl apply -f front.yaml
-kubectl apply -f api.yaml
-kubectl apply -f ingress.yaml
-
-# Attendre que les pods soient prêts
-kubectl wait --for=condition=ready pod -n workshop --all --timeout=120s
-```
-
-## Accès
-
-Ajouter `127.0.0.1 workshop.local` dans votre fichier hosts :
-- **Linux/Mac** : `/etc/hosts`
-- **Windows** : `C:\Windows\System32\drivers\etc\hosts`
-
-Accès HTTP :
-- Front : http://workshop.local:8080/front
-- API : http://workshop.local:8080/api/headers
-
-Accès HTTPS :
-- Front : https://workshop.local:8443/front
-- API : https://workshop.local:8443/api/headers
-
-Note : Accepter le certificat auto-signé dans le navigateur.
+Projets pratiques Kubernetes couvrant plusieurs aspects :
+- **S4** : Ingress, TLS et Configuration
+- **S5** : Persistence et StatefulSets (PostgreSQL)
+- **S6** : Scalabilité et Résilience (HPA, PDB, SLO/SLI)
+- **S7** : Observabilité (Prometheus, Grafana, Loki, Jaeger)
 
 ## Structure du projet
 
-### Manifests Kubernetes
-
-- `namespaces.yaml` - Namespace workshop
-- `configmap.yaml` - Configuration non sensible (BANNER_TEXT)
-- `secrets.yaml` - Credentials (DB_USER, DB_PASS)
-- `certmanager.yaml` - ClusterIssuer self-signed
-- `front.yaml` - Deployment + Service front
-- `api.yaml` - Deployment + Service api
-- `ingress.yaml` - Ingress avec routage L7 et TLS
-
-### Scripts
-
-- `deploy.sh` - Déploiement automatique (installe kind/kubectl/helm si nécessaire)
-- `cleanup.sh` - Suppression des ressources
-
-### Documentation
-
-- `INSTALL.md` - Instructions détaillées d'installation et configuration
-- `ARCHITECTURE.md` - Diagrammes techniques et flux L7
-
-## Ressources injectées
-
-### ConfigMap (front-config)
-```yaml
-BANNER_TEXT: "Hello M2 IR"
+```
+.
+├── docs/                   # Documentation complète
+│   ├── README.md           # Documentation S6 (Scalabilité)
+│   ├── INSTALL.md          # Guide d'installation S4
+│   ├── ARCHITECTURE.md     # Architecture générale
+│   ├── RUNBOOK.md          # Runbook PostgreSQL (S5)
+│   ├── SLO-SLI.md          # SLO/SLI S6
+│   ├── OBSERVABILITY.md    # Documentation S7 (Observabilité)
+│   └── RUNBOOK-ALERTS.md   # Runbook alertes S7
+├── scripts/                # Scripts de déploiement et tests
+│   ├── deploy.sh           # S4: Ingress & TLS
+│   ├── deploy-postgres.sh  # S5: PostgreSQL
+│   ├── deploy-scaling.sh   # S6: HPA & PDB
+│   └── deploy-observability.sh  # S7: Prometheus, Grafana, Loki, Jaeger
+├── manifests/              # Manifests Kubernetes
+│   ├── ingress/            # S4: Ingress, ConfigMap, Secrets
+│   ├── postgres/           # S5: StatefulSet PostgreSQL
+│   ├── scaling/            # S6: HPA, PDB, Argo Rollouts
+│   └── observability/      # S7: ServiceMonitor, PrometheusRules
+├── dashboards/             # Dashboards Grafana
+│   └── workshop-api-dashboard.json
+├── k6-tests/               # Tests de charge k6
+└── backups/                # Backups PostgreSQL
 ```
 
-### Secret (app-secrets)
-```yaml
-DB_USER: app
-DB_PASS: changeMe123
-```
+## Démarrage rapide
 
-Les variables sont injectées dans les pods via `valueFrom` (configMapKeyRef / secretKeyRef).
-
-## Tests de rollback
-
-Simuler un déploiement défectueux :
+### S4 - Ingress & TLS
 ```bash
-kubectl set image deployment/front front=nginx:broken -n workshop
-kubectl rollout status deployment/front -n workshop
+./scripts/deploy.sh
 ```
+Documentation : [docs/INSTALL.md](docs/INSTALL.md)
 
-Effectuer le rollback :
+### S5 - PostgreSQL StatefulSet
 ```bash
-kubectl rollout undo deployment/front -n workshop
-kubectl rollout status deployment/front -n workshop
+./scripts/deploy-postgres.sh
 ```
+Documentation : [docs/RUNBOOK.md](docs/RUNBOOK.md)
 
-## Vérifications
-
+### S6 - Scalabilité & Résilience
 ```bash
-# État des ressources
-kubectl get all -n workshop
-
-# Certificat TLS
-kubectl get certificate,secret -n workshop
-
-# Logs Ingress
-kubectl logs -n ingress-nginx -l app.kubernetes.io/component=controller --tail=50
-
-# Tests
-curl -k https://workshop.local:8443/front
-curl -k https://workshop.local:8443/api/headers
+./scripts/deploy-scaling.sh
 ```
+Documentation : [docs/README.md](docs/README.md)
 
-## Livrables
+### S7 - Observabilité (Prometheus, Grafana, Loki, Jaeger)
+```bash
+./scripts/deploy-observability.sh
+```
+Documentation : [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md)
 
-- Manifests Kubernetes fonctionnels
-- Ingress avec TLS opérationnel
-- ConfigMap et Secret configurés
-- Diagramme d'architecture (ARCHITECTURE.md)
-- Documentation technique complète
+## Accès rapide S7
 
-## Nettoyage
+Après déploiement de la stack observabilité :
 
 ```bash
-# Supprimer le namespace
-kubectl delete namespace workshop
+# Grafana (dashboards + Loki)
+kubectl port-forward -n observability svc/monitor-grafana 3000:80
+# → http://localhost:3000 (admin/admin)
 
-# Supprimer le cluster kind
-kind delete cluster --name workshop
+# Prometheus (métriques)
+kubectl port-forward -n observability svc/monitor-kube-prometheus-prometheus 9090:9090
+# → http://localhost:9090
+
+# Jaeger (traces)
+kubectl port-forward -n observability svc/simplest-query 16686:16686
+# → http://localhost:16686
 ```
 
 ## Documentation
 
-- **INSTALL.md** : Instructions d'installation et configuration
-- **ARCHITECTURE.md** : Diagrammes et explications techniques
+- **[Observabilité S7](docs/OBSERVABILITY.md)** - Prometheus, Grafana, Loki, Jaeger
+- **[Runbook Alertes](docs/RUNBOOK-ALERTS.md)** - Procédures de résolution des alertes
+- **[Scalabilité S6](docs/README.md)** - HPA, PDB, SLO/SLI
+- **[PostgreSQL S5](docs/RUNBOOK.md)** - StatefulSet, Backup/Restore
+- **[Installation S4](docs/INSTALL.md)** - Ingress & TLS
+- **[Architecture](docs/ARCHITECTURE.md)** - Diagrammes et concepts
+- **[SLO/SLI](docs/SLO-SLI.md)** - Objectifs et métriques
 
-## Évaluation (10 pts)
+## Prérequis
 
-- Ingress + TLS : 4 pts
-- Config/Secret : 3 pts
-- Rollback démontré : 2 pts
-- Documentation : 1 pt
+- Kubernetes (kind, minikube ou autre)
+- kubectl
+- helm (installé automatiquement si manquant)
+- k6 (pour tests de charge S6)
 
-## Auteur
+## Observabilité - Golden Signals
 
-TP S4 - M2 IR - Ingress, TLS, Config & Secrets
+Le dashboard Grafana couvre les **4 Golden Signals** (SRE) :
+
+| Signal | Métrique | Visualisation |
+|--------|----------|---------------|
+| **Latency** | p50, p95, p99 | Graphique latence |
+| **Traffic** | Requêtes/sec | RPS panel |
+| **Errors** | Taux 5xx | % erreurs avec seuil |
+| **Saturation** | CPU, RAM | Usage par pod |
+
+## Alertes configurées
+
+5 alertes Prometheus déployées :
+- **HighErrorRate** : Taux 5xx > 2% (10min)
+- **PodHighRestarts** : Redémarrages > 5 (15min)
+- **PodNotReady** : Pod non-Running (5min)
+- **HighCPUSaturation** : CPU > 80% (10min)
+- **HighLatencyP95** : p95 > 300ms (10min)
+
+Voir [docs/RUNBOOK-ALERTS.md](docs/RUNBOOK-ALERTS.md) pour les procédures.
+
+## Branches
+
+- `main` - Version stable
+- `dev` - Développement actif
+- `S4` - Ingress & TLS
+- `S5` - Persistence (PostgreSQL)
+- `S6` - Scalabilité (HPA, PDB)
+- `S7` - Observabilité (branche actuelle)
+
+## Livrables par TP
+
+### S4 - Ingress & TLS
+- ✅ Ingress NGINX configuré
+- ✅ TLS avec cert-manager (certificats auto-signés)
+- ✅ ConfigMap et Secrets
+- ✅ Diagrammes d'architecture
+
+### S5 - Persistence
+- ✅ StatefulSet PostgreSQL
+- ✅ PVC dynamique (8Gi)
+- ✅ Service headless
+- ✅ Runbook backup/restore
+- ✅ Scripts automatisés
+
+### S6 - Scalabilité & Résilience
+- ✅ HPA (CPU + custom metrics)
+- ✅ PDB (minAvailable: 2)
+- ✅ SLO/SLI documentés
+- ✅ Tests de charge k6
+- ✅ Argo Rollouts (canary - bonus)
+
+### S7 - Observabilité
+- ✅ Prometheus + Grafana (kube-prometheus-stack)
+- ✅ Loki + Promtail (centralisation logs)
+- ✅ Jaeger (tracing distribué)
+- ✅ Dashboard Grafana (4 Golden Signals)
+- ✅ 5 alertes PrometheusRule
+- ✅ Runbook d'exploitation des alertes
+- ✅ ServiceMonitor pour scraping
+
+## Stack complète
+
+```
+┌─────────────────────────────────────────┐
+│         Observabilité (S7)              │
+│  Prometheus | Grafana | Loki | Jaeger  │
+└─────────────────────────────────────────┘
+              ↓ Monitor
+┌─────────────────────────────────────────┐
+│      Scalabilité & Résilience (S6)      │
+│         HPA | PDB | SLO/SLI             │
+└─────────────────────────────────────────┘
+              ↓ Scale
+┌─────────────────────────────────────────┐
+│         Persistence (S5)                │
+│    StatefulSet PostgreSQL + PVC         │
+└─────────────────────────────────────────┘
+              ↓ Store
+┌─────────────────────────────────────────┐
+│       Ingress & Config (S4)             │
+│   Ingress NGINX | TLS | ConfigMap       │
+└─────────────────────────────────────────┘
+              ↓ Expose
+┌─────────────────────────────────────────┐
+│          Applications                   │
+│          Front | API                    │
+└─────────────────────────────────────────┘
+```
+
+## Commandes utiles
+
+```bash
+# Vérifier tous les composants
+kubectl get all -n workshop
+kubectl get all -n observability
+
+# Accéder aux dashboards
+kubectl port-forward -n observability svc/monitor-grafana 3000:80
+
+# Vérifier les alertes
+kubectl get prometheusrules -n observability
+
+# Consulter les métriques
+kubectl port-forward -n observability svc/monitor-kube-prometheus-prometheus 9090:9090
+
+# Voir les traces
+kubectl port-forward -n observability svc/simplest-query 16686:16686
+
+# Tester la charge (S6)
+k6 run k6-tests/load-test-api.js
+```
+
+## Évaluation globale
+
+| TP | Points | Livrables |
+|----|--------|-----------|
+| **S4** | 10 | Ingress TLS + Config/Secret + diagramme |
+| **S5** | 10 | StatefulSet Postgres + Runbook backup/restore |
+| **S6** | 10 | HPA+PDB + SLO/SLI + k6 |
+| **S7** | 10 | Dashboard + 5 alertes + traces |
+| **Bonus** | +4 | Canary automatisé + observabilité avancée |
+| **Total** | 44 | Documentation + manifests + scripts |
+
+## Bonnes pratiques appliquées
+
+- ✅ Jamais de Secrets en clair (stringData)
+- ✅ Toujours requests/limits sur les workloads
+- ✅ readinessProbe/livenessProbe configurées
+- ✅ Labels cohérents pour le monitoring
+- ✅ Documentation complète (README + schémas)
+- ✅ Scripts d'automatisation
+- ✅ Runbooks opérationnels
+- ✅ Observabilité sur les 4 Golden Signals

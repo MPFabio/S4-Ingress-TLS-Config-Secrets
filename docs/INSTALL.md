@@ -35,7 +35,7 @@ kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.k
 ### Méthode automatique
 
 ```bash
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ### Méthode manuelle
@@ -170,7 +170,7 @@ kubectl run test -n workshop --image=curlimages/curl --rm -it --restart=Never --
 
 ```bash
 # Via script
-./cleanup.sh
+./scripts/cleanup.sh
 
 # Ou manuellement
 kubectl delete namespace workshop
