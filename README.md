@@ -84,9 +84,6 @@ Tente de supprimer des pods et vérifie que PDB protège la disponibilité.
 # Test API (50 req/s pendant 5min)
 k6 run k6-tests/load-test-api.js
 
-# Test Front (rampe progressive)
-k6 run k6-tests/load-test-front.js
-
 # Spike test (pic de charge)
 k6 run k6-tests/spike-test.js
 ```
@@ -109,9 +106,7 @@ watch -n 5 'kubectl top pods -n workshop'
 ### Manifests
 
 - `manifests/scaling/api-hpa.yaml` - HPA pour l'API (2-6 replicas, 60% CPU)
-- `manifests/scaling/front-hpa.yaml` - HPA pour le front (2-5 replicas, 70% CPU)
 - `manifests/scaling/api-pdb.yaml` - PDB API (minAvailable: 2)
-- `manifests/scaling/front-pdb.yaml` - PDB Front (minAvailable: 1)
 - `manifests/scaling/api-rollout.yaml` - Argo Rollout canary (bonus)
 - `manifests/scaling/api-services-canary.yaml` - Services pour canary
 
@@ -124,7 +119,6 @@ watch -n 5 'kubectl top pods -n workshop'
 ### Tests de charge
 
 - `k6-tests/load-test-api.js` - Test constant 50 req/s
-- `k6-tests/load-test-front.js` - Test rampe progressive
 - `k6-tests/spike-test.js` - Test pic de charge
 
 ### Documentation

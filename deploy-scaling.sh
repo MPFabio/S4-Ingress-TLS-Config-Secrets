@@ -25,15 +25,13 @@ fi
 echo ""
 
 # Déployer HPA
-echo "[2/4] Déploiement des HorizontalPodAutoscalers..."
+echo "[2/4] Déploiement du HorizontalPodAutoscaler..."
 kubectl apply -f manifests/scaling/api-hpa.yaml
-kubectl apply -f manifests/scaling/front-hpa.yaml
 echo ""
 
 # Déployer PDB
-echo "[3/4] Déploiement des PodDisruptionBudgets..."
+echo "[3/4] Déploiement du PodDisruptionBudget..."
 kubectl apply -f manifests/scaling/api-pdb.yaml
-kubectl apply -f manifests/scaling/front-pdb.yaml
 echo ""
 
 # Attendre que metrics-server collecte les métriques
@@ -64,4 +62,6 @@ echo "  Observer HPA: watch -n 2 'kubectl get hpa -n workshop'"
 echo "  Observer pods: watch -n 2 'kubectl get pods -n workshop'"
 echo "  Métriques: kubectl top pods -n workshop"
 echo "  Test charge: k6 run k6-tests/load-test-api.js"
+
+
 

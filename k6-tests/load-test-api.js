@@ -61,3 +61,5 @@ ${indent}Statut HPA: ${data.metrics.http_req_duration.values['p(95)'] < 300 ? 'P
   return summary;
 }
 
+
+

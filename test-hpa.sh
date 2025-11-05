@@ -68,3 +68,5 @@ echo ""
 echo "Le HPA va maintenant descaler progressivement vers minReplicas (5 minutes)"
 echo "Observer avec: watch -n 2 'kubectl get hpa,pods -n workshop'"
 
+
+

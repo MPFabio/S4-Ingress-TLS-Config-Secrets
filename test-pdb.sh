@@ -67,3 +67,5 @@ echo ""
 echo "Le PDB protège contre les suppressions excessives"
 echo "minAvailable: 2 signifie qu'au moins 2 pods doivent toujours être Running"
 
+
+
