@@ -11,7 +11,7 @@ echo ""
 
 # Vérifier que PDB existe
 if ! kubectl get pdb -n "$NAMESPACE" &> /dev/null; then
-    echo "ERREUR: Aucun PDB trouvé. Déployez d'abord avec ./deploy-scaling.sh"
+    echo "ERREUR: Aucun PDB trouvé. Déployez d'abord avec ./scripts/deploy-scaling.sh"
     exit 1
 fi
 

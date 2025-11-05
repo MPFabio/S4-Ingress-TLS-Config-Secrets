@@ -12,7 +12,7 @@
 ### Déploiement automatique
 
 ```bash
-./deploy-postgres.sh
+./scripts/deploy-postgres.sh
 ```
 
 ### Déploiement manuel
@@ -48,7 +48,7 @@ kubectl exec -it $POD -n workshop -- psql -U postgres
 ### Backup automatique
 
 ```bash
-./backup.sh
+./scripts/backup.sh
 ```
 
 Le backup est créé dans `./backups/postgres-backup-YYYY-MM-DD_HH-MM-SS.sql.gz`
@@ -98,7 +98,7 @@ velero backup get
 ### Restore automatique
 
 ```bash
-./restore.sh ./backups/postgres-backup-2024-11-04_10-30-00.sql.gz
+./scripts/restore.sh ./backups/postgres-backup-2024-11-04_10-30-00.sql.gz
 ```
 
 ### Restore manuel
@@ -134,7 +134,7 @@ kubectl get all -n workshop
 ### Test automatique
 
 ```bash
-./test-postgres.sh
+./scripts/test-postgres.sh
 ```
 
 ### Test manuel

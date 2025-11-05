@@ -11,7 +11,7 @@ echo ""
 
 # Vérifier que HPA existe
 if ! kubectl get hpa -n "$NAMESPACE" &> /dev/null; then
-    echo "ERREUR: Aucun HPA trouvé. Déployez d'abord avec ./deploy-scaling.sh"
+    echo "ERREUR: Aucun HPA trouvé. Déployez d'abord avec ./scripts/deploy-scaling.sh"
     exit 1
 fi
 
