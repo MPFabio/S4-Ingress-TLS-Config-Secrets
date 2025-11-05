@@ -35,19 +35,19 @@ kubectl wait --namespace cert-manager --for=condition=ready pod --selector=app.k
 ### Méthode automatique
 
 ```bash
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ### Méthode manuelle
 
 ```bash
-kubectl apply -f namespaces.yaml
-kubectl apply -f configmap.yaml
-kubectl apply -f secrets.yaml
-kubectl apply -f certmanager.yaml
-kubectl apply -f front.yaml
-kubectl apply -f api.yaml
-kubectl apply -f ingress.yaml
+kubectl apply -f manifests/ingress/namespaces.yaml
+kubectl apply -f manifests/ingress/configmap.yaml
+kubectl apply -f manifests/ingress/secrets.yaml
+kubectl apply -f manifests/ingress/certmanager.yaml
+kubectl apply -f manifests/ingress/front.yaml
+kubectl apply -f manifests/ingress/api.yaml
+kubectl apply -f manifests/ingress/ingress.yaml
 kubectl wait --for=condition=ready pod -n workshop --all --timeout=120s
 ```
 
@@ -170,7 +170,7 @@ kubectl run test -n workshop --image=curlimages/curl --rm -it --restart=Never --
 
 ```bash
 # Via script
-./cleanup.sh
+./scripts/cleanup.sh
 
 # Ou manuellement
 kubectl delete namespace workshop
