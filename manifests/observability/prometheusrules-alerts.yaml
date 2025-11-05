@@ -1,0 +1,94 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: workshop-alerts
+  namespace: observability
+  labels:
+    release: monitor
+spec:
+  groups:
+    - name: api.rules
+      interval: 30s
+      rules:
+        # Alerte 1 : Taux d'erreurs élevé (>2% sur 10min)
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5..",namespace="workshop"}[5m]))
+              /
+              sum(rate(http_requests_total{namespace="workshop"}[5m]))
+            ) > 0.02
+          for: 10m
+          labels:
+            severity: warning
+            component: api
+          annotations:
+            summary: "Taux d'erreurs 5xx élevé sur l'API"
+            description: "Plus de 2% d'erreurs 5xx détectées sur les 10 dernières minutes (valeur: {{ $value | humanizePercentage }})"
+            dashboard: "http://localhost:3000/d/workshop-api/workshop-api-dashboard"
+            runbook: "docs/RUNBOOK-ALERTS.md#higherrorrate"
+
+        # Alerte 2 : Redémarrages anormaux des pods
+        - alert: PodHighRestarts
+          expr: |
+            increase(kube_pod_container_status_restarts_total{namespace="workshop"}[10m]) > 5
+          for: 15m
+          labels:
+            severity: warning
+            component: infrastructure
+          annotations:
+            summary: "Redémarrages anormaux de pods détectés"
+            description: "Le pod {{ $labels.pod }} dans le namespace {{ $labels.namespace }} a redémarré {{ $value }} fois en 10 minutes"
+            dashboard: "http://localhost:3000/d/workshop-infra/workshop-infrastructure"
+            runbook: "docs/RUNBOOK-ALERTS.md#podhighrestarts"
+
+    - name: availability.rules
+      interval: 30s
+      rules:
+        # Alerte 3 : Pods non disponibles
+        - alert: PodNotReady
+          expr: |
+            kube_pod_status_phase{namespace="workshop",phase!="Running"} > 0
+          for: 5m
+          labels:
+            severity: critical
+            component: infrastructure
+          annotations:
+            summary: "Pod non disponible détecté"
+            description: "Le pod {{ $labels.pod }} n'est pas en état Running depuis 5 minutes (état: {{ $labels.phase }})"
+            runbook: "docs/RUNBOOK-ALERTS.md#podnotready"
+
+        # Alerte 4 : Saturation CPU élevée
+        - alert: HighCPUSaturation
+          expr: |
+            (
+              sum(rate(container_cpu_usage_seconds_total{namespace="workshop",container!=""}[5m])) by (pod)
+              /
+              sum(kube_pod_container_resource_limits{namespace="workshop",resource="cpu"}) by (pod)
+            ) > 0.80
+          for: 10m
+          labels:
+            severity: warning
+            component: resources
+          annotations:
+            summary: "Saturation CPU élevée (>80%)"
+            description: "Le pod {{ $labels.pod }} utilise {{ $value | humanizePercentage }} de sa limite CPU depuis 10 minutes"
+            dashboard: "http://localhost:3000/d/workshop-api/workshop-api-dashboard"
+            runbook: "docs/RUNBOOK-ALERTS.md#highcpusaturation"
+
+        # Alerte 5 : Latence p95 élevée (si métriques disponibles)
+        - alert: HighLatencyP95
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{namespace="workshop"}[5m])) by (le, service)
+            ) > 0.3
+          for: 10m
+          labels:
+            severity: warning
+            component: performance
+          annotations:
+            summary: "Latence p95 élevée (>300ms)"
+            description: "La latence p95 du service {{ $labels.service }} est de {{ $value }}s depuis 10 minutes (SLO: <300ms)"
+            dashboard: "http://localhost:3000/d/workshop-api/workshop-api-dashboard"
+            runbook: "docs/RUNBOOK-ALERTS.md#highlatencyp95"
+
