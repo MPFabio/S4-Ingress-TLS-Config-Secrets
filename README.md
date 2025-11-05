@@ -1,9 +1,8 @@
-# TP Kubernetes - Ingress, TLS, Persistence & Scalabilité
+# TP Kubernetes - Ingress, TLS & Persistence
 
 Projets pratiques Kubernetes couvrant plusieurs aspects :
 - **S4** : Ingress, TLS et Configuration
 - **S5** : Persistence et StatefulSets (PostgreSQL)
-- **S6** : Scalabilité et Résilience (HPA, PDB, SLO/SLI)
 
 ## Structure du projet
 
@@ -52,7 +51,5 @@ Documentation : [docs/README.md](docs/README.md) | [docs/RUNBOOK.md](docs/RUNBOO
 ## Branches
 
 - `main` - Version stable
-- `dev` - Développement actif
 - `S4` - Ingress & TLS
 - `S5` - Persistence (branche actuelle)
-- `S6` - Scalabilité
