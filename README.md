@@ -1,167 +1,237 @@
-# TP S5 — Persistance & Workloads avec état
+# TP S6 — Scalabilité & Résilience
 
-Déploiement PostgreSQL avec StatefulSet, provisionnement dynamique de volumes (PVC), et stratégie de backup/restore.
+Mise en œuvre de l'autoscaling (HPA), de la protection contre les disruptions (PDB), des SLO/SLI, et du déploiement canary avec Argo Rollouts.
 
 ## Description
 
-Mise en œuvre de :
-- StatefulSet pour applications avec état
-- Provisionnement dynamique de volumes (PV/PVC/StorageClass)
-- Service headless pour identité réseau stable
-- Backup et restore PostgreSQL (pg_dumpall)
+- HorizontalPodAutoscaler (HPA) basé sur CPU et mémoire
+- PodDisruptionBudget (PDB) pour maintenir la disponibilité
+- Tests de charge avec k6
+- Définition et mesure des SLO/SLI
+- Déploiement canary avec Argo Rollouts (bonus)
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    StatefulSet[StatefulSet postgres] --> Pod[Pod postgres-0]
-    Pod --> PVC[PVC data-postgres-0<br/>8Gi]
-    PVC --> PV[PV<br/>provisionné automatiquement]
+    HPA[HPA<br/>minReplicas: 2<br/>maxReplicas: 6] -.surveille CPU/RAM.-> Deployment[Deployment api]
     
-    Service[Service headless<br/>clusterIP: None] -.DNS stable.-> Pod
-    Secret[Secret pg-secret] -.credentials.-> Pod
+    Deployment --> Pod1[Pod api-1]
+    Deployment --> Pod2[Pod api-2]
+    Deployment -.scale automatique.-> PodN[Pod api-N]
     
-    StorageClass[StorageClass standard] -.template.-> PVC
+    PDB[PDB<br/>minAvailable: 2] -.protège.-> Deployment
     
-    style StatefulSet fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
-    style Service fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style PVC fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    MetricsServer[Metrics Server] -.métriques.-> HPA
+    K6[k6 load test] -->|charge| Service[Service api]
+    Service --> Pod1
+    Service --> Pod2
+    Service --> PodN
+    
+    style HPA fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
+    style PDB fill:#ffb3ba,stroke:#333,stroke-width:2px,color:#000
+    style MetricsServer fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
 ```
-
-Voir [RUNBOOK.md](RUNBOOK.md) pour la documentation technique détaillée.
 
 ## Prérequis
 
-- Cluster Kubernetes avec StorageClass disponible
-- kubectl
-- Namespace `workshop`
+- Cluster Kubernetes avec metrics-server
+- Applications déployées (front, api)
+- k6 installé pour les tests de charge
 
 ## Déploiement rapide
 
 ```bash
-./deploy-postgres.sh
+./deploy-scaling.sh
 ```
 
-Le script installe PostgreSQL avec volume persistant dynamique.
+Installe metrics-server (si nécessaire), HPA et PDB.
 
 ## Déploiement manuel
 
 ```bash
-kubectl apply -f manifests/postgres/postgres-secret.yaml
-kubectl apply -f manifests/postgres/postgres-service.yaml
-kubectl apply -f manifests/postgres/postgres-statefulset.yaml
-kubectl wait --for=condition=ready pod -l app=postgres -n workshop --timeout=120s
+# Installer metrics-server (si nécessaire)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Déployer HPA et PDB
+kubectl apply -f manifests/scaling/api-hpa.yaml
+kubectl apply -f manifests/scaling/front-hpa.yaml
+kubectl apply -f manifests/scaling/api-pdb.yaml
+kubectl apply -f manifests/scaling/front-pdb.yaml
 ```
 
-## Accès
+## Tests
+
+### Test HPA
 
 ```bash
-POD=$(kubectl -n workshop get po -l app=postgres -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $POD -n workshop -- psql -U postgres
+./test-hpa.sh
 ```
 
-## Opérations
+Génère de la charge CPU et observe le scaling automatique.
 
-### Backup
+### Test PDB
 
 ```bash
-./backup.sh
+./test-pdb.sh
 ```
 
-Sauvegarde dans `./backups/postgres-backup-YYYY-MM-DD_HH-MM-SS.sql.gz`
+Tente de supprimer des pods et vérifie que PDB protège la disponibilité.
 
-### Restore
+### Tests de charge k6
 
 ```bash
-./restore.sh ./backups/postgres-backup-2024-11-04_10-30-00.sql.gz
+# Test API (50 req/s pendant 5min)
+k6 run k6-tests/load-test-api.js
+
+# Test Front (rampe progressive)
+k6 run k6-tests/load-test-front.js
+
+# Spike test (pic de charge)
+k6 run k6-tests/spike-test.js
 ```
 
-### Test de persistance
+## Observer l'autoscaling
 
 ```bash
-./test-postgres.sh
+# Terminal 1: Lancer la charge
+k6 run k6-tests/load-test-api.js
+
+# Terminal 2: Observer HPA
+watch -n 2 'kubectl get hpa,pods -n workshop'
+
+# Terminal 3: Métriques
+watch -n 5 'kubectl top pods -n workshop'
 ```
 
 ## Structure
 
 ### Manifests
 
-- `manifests/postgres/postgres-secret.yaml` - Credentials PostgreSQL
-- `manifests/postgres/postgres-service.yaml` - Service headless (clusterIP: None)
-- `manifests/postgres/postgres-statefulset.yaml` - StatefulSet avec volumeClaimTemplates
+- `manifests/scaling/api-hpa.yaml` - HPA pour l'API (2-6 replicas, 60% CPU)
+- `manifests/scaling/front-hpa.yaml` - HPA pour le front (2-5 replicas, 70% CPU)
+- `manifests/scaling/api-pdb.yaml` - PDB API (minAvailable: 2)
+- `manifests/scaling/front-pdb.yaml` - PDB Front (minAvailable: 1)
+- `manifests/scaling/api-rollout.yaml` - Argo Rollout canary (bonus)
+- `manifests/scaling/api-services-canary.yaml` - Services pour canary
 
 ### Scripts
 
-- `deploy-postgres.sh` - Déploiement automatique
-- `backup.sh` - Backup via pg_dumpall
-- `restore.sh` - Restore depuis backup
-- `test-postgres.sh` - Tests de persistance
+- `deploy-scaling.sh` - Déploiement HPA/PDB
+- `test-hpa.sh` - Test autoscaling
+- `test-pdb.sh` - Test disruption budget
+
+### Tests de charge
+
+- `k6-tests/load-test-api.js` - Test constant 50 req/s
+- `k6-tests/load-test-front.js` - Test rampe progressive
+- `k6-tests/spike-test.js` - Test pic de charge
 
 ### Documentation
 
-- `RUNBOOK.md` - Procédures techniques complètes
+- `SLO-SLI.md` - Définition SLO/SLI et résultats
 
 ## Concepts clés
 
-### StatefulSet vs Deployment
+### HPA
 
-| Aspect | StatefulSet | Deployment |
-|--------|-------------|------------|
-| Identité pods | Stable (postgres-0) | Aléatoire |
-| DNS | Par pod | Service uniquement |
-| Volumes | PVC dédié par pod | Partagé ou aucun |
-| Ordre démarrage | Séquentiel | Parallèle |
+Autoscaling horizontal basé sur métriques :
+- **CPU** : Utilisation moyenne CPU (%)
+- **Mémoire** : Utilisation moyenne mémoire (%)
+- **Custom** : Requêtes/sec via Prometheus Adapter (bonus)
 
-### Provisionnement dynamique
+Comportement : Scale up rapide, scale down progressif (stabilizationWindow).
 
-1. StorageClass définit le template de provisionnement
-2. PVC demande un volume (via volumeClaimTemplates)
-3. Kubernetes crée automatiquement le PV
-4. Association PVC ↔ PV automatique
+### PDB
 
-### Service Headless
+Protection contre les disruptions volontaires :
+- **minAvailable** : Nombre minimum de pods toujours disponibles
+- **maxUnavailable** : Nombre maximum de pods pouvant être indisponibles
 
-```yaml
-clusterIP: None
+Bloque les opérations qui violeraient le budget (drain node, évictions).
+
+### QoS (Quality of Service)
+
+Basé sur requests/limits :
+- **Guaranteed** : requests = limits (priorité max)
+- **Burstable** : requests < limits (priorité moyenne)
+- **BestEffort** : pas de requests/limits (priorité min)
+
+## SLO/SLI
+
+Voir [SLO-SLI.md](SLO-SLI.md) pour :
+- Définition des SLI (métriques)
+- Objectifs SLO (cibles)
+- Résultats des tests k6
+- Error budget
+
+## Déploiement canary (bonus)
+
+### Installation Argo Rollouts
+
+```bash
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
 ```
 
-Crée DNS stable : `postgres-0.postgres.workshop.svc.cluster.local`
+### Déployer le Rollout
+
+```bash
+kubectl apply -f manifests/scaling/api-services-canary.yaml
+kubectl apply -f manifests/scaling/api-rollout.yaml
+```
+
+### Promouvoir une release canary
+
+```bash
+# Changer l'image
+kubectl argo rollouts set image api api=kennethreitz/httpbin:latest -n workshop
+
+# Observer la progression
+kubectl argo rollouts get rollout api -n workshop --watch
+
+# Promouvoir manuellement
+kubectl argo rollouts promote api -n workshop
+```
+
+Stratégie : 10% → 30% → 60% → 100% avec pauses.
 
 ## Vérifications
 
 ```bash
-# État des ressources
-kubectl get statefulset,pod,svc,pvc,pv -n workshop -l app=postgres
+# HPA
+kubectl get hpa -n workshop
+kubectl describe hpa api-hpa -n workshop
 
-# Connexion PostgreSQL
-kubectl exec postgres-0 -n workshop -- psql -U postgres -c '\l'
+# PDB
+kubectl get pdb -n workshop
+kubectl describe pdb api-pdb -n workshop
 
-# Espace disque
-kubectl exec postgres-0 -n workshop -- df -h /var/lib/postgresql/data
+# Métriques
+kubectl top pods -n workshop
+kubectl top nodes
+
+# Événements
+kubectl get events -n workshop --sort-by='.lastTimestamp' | tail -20
 ```
 
 ## Nettoyage
 
 ```bash
-# Supprimer PostgreSQL (conserve le PVC)
-kubectl delete statefulset postgres -n workshop
-kubectl delete service postgres -n workshop
-
-# Supprimer le PVC (perte de données)
-kubectl delete pvc data-postgres-0 -n workshop
+kubectl delete hpa,pdb -n workshop --all
 ```
 
 ## Livrables
 
-- Manifests StatefulSet PostgreSQL avec PVC dynamique
-- Service headless configuré
-- Runbook backup/restore opérationnel
-- Scripts d'automatisation
-- Documentation technique
+- Fiche SLO/SLI avec résultats k6
+- Manifests HPA + PDB
+- Scripts de test
+- Manifests Argo Rollouts (bonus)
 
 ## Évaluation (10 pts)
 
-- StatefulSet + PVC : 5 pts
-- Backup : 3 pts
-- Restore : 1 pt
-- Documentation : 1 pt
+- HPA : 3 pts
+- PDB : 2 pts
+- SLO/SLI : 3 pts
+- Tests de charge : 2 pts
+- Bonus canary : +2 pts

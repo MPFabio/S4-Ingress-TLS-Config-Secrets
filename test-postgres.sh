@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Script de test PostgreSQL
-# Crée des données de test et vérifie la persistance
+# Script de test PostgreSQL avec persistance
 
 set -e
 
@@ -10,7 +9,6 @@ NAMESPACE="workshop"
 echo "=== Test PostgreSQL avec persistance ==="
 echo ""
 
-# Récupérer le pod
 POD=$(kubectl -n "$NAMESPACE" get po -l app=postgres -o jsonpath='{.items[0].metadata.name}')
 
 if [ -z "$POD" ]; then
@@ -45,7 +43,7 @@ kubectl -n "$NAMESPACE" exec "$POD" -- sh -c 'df -h /var/lib/postgresql/data'
 
 echo ""
 echo "[Test 4] Vérifier le PVC..."
-kubectl get pvc -n "$NAMESPACE" -l app=postgres
+kubectl get pvc -n "$NAMESPACE"
 
 echo ""
 echo "=== Tests terminés ==="
@@ -54,4 +52,3 @@ echo "Pour tester la persistance complète:"
 echo "  1. kubectl delete pod $POD -n $NAMESPACE"
 echo "  2. Attendre que le pod redémarre"
 echo "  3. Relancer ce script - les données doivent être toujours là"
-

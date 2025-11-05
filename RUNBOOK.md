@@ -12,7 +12,6 @@
 ### Déploiement automatique
 
 ```bash
-cd s5-persistence
 ./deploy-postgres.sh
 ```
 
