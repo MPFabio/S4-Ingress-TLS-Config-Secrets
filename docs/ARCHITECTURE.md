@@ -11,11 +11,11 @@ flowchart TB
     Ingress -->|/front| SvcFront[Service front<br/>ClusterIP:80]
     Ingress -->|/api| SvcApi[Service api<br/>ClusterIP:80]
     
-    SvcFront --> PodFront1[Pod front-1]
-    SvcFront --> PodFront2[Pod front-2]
+    SvcFront --> PodFront1[Pod front-1<br/>nginx:plain-text]
+    SvcFront --> PodFront2[Pod front-2<br/>nginx:plain-text]
     
-    SvcApi --> PodApi1[Pod api-1]
-    SvcApi --> PodApi2[Pod api-2]
+    SvcApi --> PodApi1[Pod api-1<br/>httpbin]
+    SvcApi --> PodApi2[Pod api-2<br/>httpbin]
     
     CertManager[cert-manager] -.Génère certificat.-> Secret[Secret web-tls]
     Secret -.Utilisé par.-> Ingress
@@ -26,11 +26,19 @@ flowchart TB
     SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
     SecretApp -.DB_USER/DB_PASS.-> PodApi2
     
-    style Ingress fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
-    style CertManager fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
-    style Secret fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
-    style ConfigMap fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style SecretApp fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:4px,color:#000
+    style CertManager fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Secret fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style ConfigMap fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SecretApp fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Client fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
+    style DNS fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PodFront1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodFront2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodApi1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodApi2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 ---
@@ -61,17 +69,17 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[Client HTTPS<br/>Chiffré] --> B{Ingress NGINX<br/>TLS Termination}
-    B --> C[Service front<br/>HTTP]
-    B --> D[Service api<br/>HTTP]
+    A[Client HTTPS<br/>Encrypted] --> B{Ingress NGINX<br/>TLS Termination}
+    B --> C[Service front<br/>HTTP - Unencrypted]
+    B --> D[Service api<br/>HTTP - Unencrypted]
     
     E[Secret web-tls<br/>Certificat + Clé] -.Utilisé pour TLS.-> B
     
-    style A fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
-    style B fill:#ffb3ba,stroke:#333,stroke-width:3px,color:#000
-    style C fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style D fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style E fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style A fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
+    style B fill:#FF6B6B,stroke:#2C3E50,stroke-width:4px,color:#000
+    style C fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style D fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style E fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Explication :**
@@ -99,10 +107,13 @@ flowchart TB
     E --> F[Secret<br/>web-tls]
     F --> G[Ingress Controller<br/>Utilise le certificat]
     
-    style A fill:#bae1ff,stroke:#333,stroke-width:2px,color:#000
-    style C fill:#bae1ff,stroke:#333,stroke-width:3px,color:#000
-    style F fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
-    style G fill:#ffb3ba,stroke:#333,stroke-width:2px,color:#000
+    style A fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style C fill:#4ECDC4,stroke:#2C3E50,stroke-width:4px,color:#000
+    style F fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style G fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style B fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D fill:#FFF59D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style E fill:#FFD54F,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Processus :**
@@ -133,8 +144,13 @@ flowchart TB
     SvcApi -->|Round-robin| P3[Pod api-1<br/>10.244.0.20:80]
     SvcApi -->|Round-robin| P4[Pod api-2<br/>10.244.0.21:80]
     
-    style SvcFront fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style SvcApi fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P3 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -148,14 +164,14 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    CM[ConfigMap<br/>front-config<br/>BANNER_TEXT: "Hello M2 IR"] -.valueFrom.-> PF[Pod front<br/>ENV: BANNER_TEXT]
+    CM["ConfigMap<br/>front-config<br/>BANNER_TEXT: Hello M2 IR"] -.valueFrom.-> PF["Pod front<br/>ENV: BANNER_TEXT"]
     
-    S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
+    S["Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123"] -.secretKeyRef.-> PA["Pod api<br/>ENV: DB_USER, DB_PASS"]
     
-    style CM fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
-    style S fill:#ffffba,stroke:#333,stroke-width:2px,color:#000
-    style PF fill:#fff,stroke:#333,stroke-width:2px,color:#000
-    style PA fill:#fff,stroke:#333,stroke-width:2px,color:#000
+    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PF fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PA fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **ConfigMap (données non sensibles) :**
@@ -284,7 +300,7 @@ flowchart TB
         D2 --> P3
         D2 --> P4
         D2 --> P5
-        Note1[Nouveaux pods ne démarrent pas<br/>Anciens pods restent actifs]
+        Note1[ERREUR: Nouveaux pods ne démarrent pas<br/>OK: Anciens pods restent actifs]
     end
     
     subgraph Après Rollback
@@ -293,14 +309,24 @@ flowchart TB
         P7[Pod front-2<br/>Image: nginx:1.0]
         D3 --> P6
         D3 --> P7
-        Note2[Retour à la version stable]
+        Note2[OK: Retour à la version stable]
     end
     
     Avant --> Pendant
     Pendant --> Après
     
-    style Note1 fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
-    style Note2 fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style Note1 fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Note2 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style D1 fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D2 fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D3 fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P3 fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P5 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P6 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P7 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Commandes :**
@@ -326,12 +352,9 @@ kubectl rollout undo deployment/front -n workshop --to-revision=1
 
 ```mermaid
 flowchart TB
-    External[External Traffic] --> NSIngress[ingress-nginx namespace]
-    NSIngress --> Ingress[Ingress Controller]
-    
-    Ingress --> NSWorkshop[workshop namespace]
-    
-    subgraph NSWorkshop
+    subgraph Namespace workshop
+        direction TB
+        Ingress[Ingress web]
         SvcF[Service front]
         SvcA[Service api]
         PF1[Pod front-1]
@@ -341,6 +364,8 @@ flowchart TB
         CM[ConfigMap]
         S[Secret]
         
+        Ingress --> SvcF
+        Ingress --> SvcA
         SvcF --> PF1
         SvcF --> PF2
         SvcA --> PA1
@@ -351,11 +376,29 @@ flowchart TB
         S -.-> PA2
     end
     
-    NSCert[cert-manager namespace] -.certificats.-> NSWorkshop
+    subgraph Cluster
+        NS1[Namespace: workshop]
+        NS2[Namespace: ingress-nginx]
+        NS3[Namespace: cert-manager]
+    end
     
-    style NSWorkshop fill:#e6ffe6,stroke:#333,stroke-width:2px,color:#000
-    style NSIngress fill:#ffe6e6,stroke:#333,stroke-width:2px,color:#000
-    style NSCert fill:#e6f3ff,stroke:#333,stroke-width:2px,color:#000
+    External[External Traffic] --> NS2
+    NS2 --> NS1
+    NS3 -.Gère certificats.-> NS1
+    
+    style NS1 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS2 fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS3 fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcF fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
+    style SvcA fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PF1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PF2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PA1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PA2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
+    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style External fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Points de sécurité :**
