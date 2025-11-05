@@ -8,9 +8,9 @@ Métriques mesurables basées sur les 4 Golden Signals (Google SRE).
 
 | Golden Signal | SLI | Métrique | Source (TP) | Valeur cible |
 |---------------|-----|----------|-------------|--------------|
-| **Latency** | Latence p50 | Temps de réponse médian | k6 | < 100ms |
-| **Latency** | Latence p95 | 95% des requêtes | k6 | < 300ms |
-| **Latency** | Latence p99 | 99% des requêtes | k6 | < 500ms |
+| **Latency** | Latence p50 | 50% des requêtes ≤ cette valeur | k6 | < 100ms |
+| **Latency** | Latence p95 | 95% des requêtes ≤ cette valeur | k6 | < 300ms |
+| **Latency** | Latence p99 | 99% des requêtes ≤ cette valeur | k6 | < 500ms |
 | **Traffic** | Throughput | Requêtes par seconde | k6 | > 50 req/s |
 | **Errors** | Taux d'erreur | Requêtes échouées / total | k6 | < 1% |
 | **Errors** | Disponibilité | 100% - taux d'erreur | k6 | > 99% |
