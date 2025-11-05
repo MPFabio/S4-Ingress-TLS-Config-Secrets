@@ -26,11 +26,19 @@ flowchart TB
     SecretApp[Secret<br/>app-secrets] -.DB_USER/DB_PASS.-> PodApi1
     SecretApp -.DB_USER/DB_PASS.-> PodApi2
     
-    style Ingress fill:#f9a,stroke:#333,stroke-width:3px
-    style CertManager fill:#9cf,stroke:#333,stroke-width:2px
-    style Secret fill:#fcf,stroke:#333,stroke-width:2px
-    style ConfigMap fill:#cfc,stroke:#333,stroke-width:2px
-    style SecretApp fill:#fcc,stroke:#333,stroke-width:2px
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:4px,color:#000
+    style CertManager fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Secret fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style ConfigMap fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SecretApp fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Client fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
+    style DNS fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PodFront1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodFront2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodApi1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PodApi2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 ---
@@ -67,11 +75,11 @@ flowchart LR
     
     E[Secret web-tls<br/>Certificat + Clé] -.Utilisé pour TLS.-> B
     
-    style A fill:#fcc,stroke:#333,stroke-width:2px
-    style B fill:#f9a,stroke:#333,stroke-width:3px
-    style C fill:#cfc,stroke:#333,stroke-width:2px
-    style D fill:#cfc,stroke:#333,stroke-width:2px
-    style E fill:#fcf,stroke:#333,stroke-width:2px
+    style A fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
+    style B fill:#FF6B6B,stroke:#2C3E50,stroke-width:4px,color:#000
+    style C fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style D fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style E fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Explication :**
@@ -99,10 +107,13 @@ flowchart TB
     E --> F[Secret<br/>web-tls]
     F --> G[Ingress Controller<br/>Utilise le certificat]
     
-    style A fill:#9cf,stroke:#333,stroke-width:2px
-    style C fill:#9cf,stroke:#333,stroke-width:3px
-    style F fill:#fcf,stroke:#333,stroke-width:2px
-    style G fill:#f9a,stroke:#333,stroke-width:2px
+    style A fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style C fill:#4ECDC4,stroke:#2C3E50,stroke-width:4px,color:#000
+    style F fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style G fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style B fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D fill:#FFF59D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style E fill:#FFD54F,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Processus :**
@@ -133,8 +144,13 @@ flowchart TB
     SvcApi -->|Round-robin| P3[Pod api-1<br/>10.244.0.20:80]
     SvcApi -->|Round-robin| P4[Pod api-2<br/>10.244.0.21:80]
     
-    style SvcFront fill:#cfc,stroke:#333,stroke-width:2px
-    style SvcApi fill:#cfc,stroke:#333,stroke-width:2px
+    style SvcFront fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcApi fill:#56CCF2,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P3 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Explication :**
@@ -148,14 +164,14 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    CM[ConfigMap<br/>front-config<br/>BANNER_TEXT: "Hello M2 IR"] -.valueFrom.-> PF[Pod front<br/>ENV: BANNER_TEXT]
+    CM["ConfigMap<br/>front-config<br/>BANNER_TEXT: Hello M2 IR"] -.valueFrom.-> PF["Pod front<br/>ENV: BANNER_TEXT"]
     
-    S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
+    S["Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123"] -.secretKeyRef.-> PA["Pod api<br/>ENV: DB_USER, DB_PASS"]
     
-    style CM fill:#cfc,stroke:#333,stroke-width:2px
-    style S fill:#fcc,stroke:#333,stroke-width:2px
-    style PF fill:#fff,stroke:#333,stroke-width:2px
-    style PA fill:#fff,stroke:#333,stroke-width:2px
+    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PF fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
+    style PA fill:#DDA0DD,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **ConfigMap (données non sensibles) :**
@@ -299,8 +315,18 @@ flowchart TB
     Avant --> Pendant
     Pendant --> Après
     
-    style Note1 fill:#fcc,stroke:#333,stroke-width:2px
-    style Note2 fill:#cfc,stroke:#333,stroke-width:2px
+    style Note1 fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Note2 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style D1 fill:#A8E6CF,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D2 fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style D3 fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P3 fill:#FF8B94,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P4 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P5 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P6 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style P7 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
 ```
 
 **Commandes :**
@@ -360,9 +386,19 @@ flowchart TB
     NS2 --> NS1
     NS3 -.Gère certificats.-> NS1
     
-    style NS1 fill:#cfc,stroke:#333,stroke-width:2px
-    style NS2 fill:#f9a,stroke:#333,stroke-width:2px
-    style NS3 fill:#9cf,stroke:#333,stroke-width:2px
+    style NS1 fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS2 fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style NS3 fill:#4ECDC4,stroke:#2C3E50,stroke-width:3px,color:#000
+    style Ingress fill:#FF6B6B,stroke:#2C3E50,stroke-width:3px,color:#000
+    style SvcF fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
+    style SvcA fill:#56CCF2,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PF1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PF2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PA1 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style PA2 fill:#DDA0DD,stroke:#2C3E50,stroke-width:2px,color:#000
+    style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:2px,color:#000
+    style S fill:#FFE66D,stroke:#2C3E50,stroke-width:2px,color:#000
+    style External fill:#FF8B94,stroke:#2C3E50,stroke-width:3px,color:#000
 ```
 
 **Points de sécurité :**
