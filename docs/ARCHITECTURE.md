@@ -152,10 +152,10 @@ flowchart LR
     
     S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
     
-    style CM fill:#cfc,stroke:#333,stroke-width:2px
-    style S fill:#fcc,stroke:#333,stroke-width:2px
-    style PF fill:#fff,stroke:#333,stroke-width:2px
-    style PA fill:#fff,stroke:#333,stroke-width:2px
+    style CM fill:#baffc9,stroke:#333,stroke-width:2px,color:#000
+    style S fill:#ffdfba,stroke:#333,stroke-width:2px,color:#000
+    style PF fill:#f0f0f0,stroke:#333,stroke-width:2px,color:#000
+    style PA fill:#f0f0f0,stroke:#333,stroke-width:2px,color:#000
 ```
 
 **ConfigMap (données non sensibles) :**
