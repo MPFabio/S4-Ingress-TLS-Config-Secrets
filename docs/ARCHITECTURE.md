@@ -164,9 +164,9 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    CM[ConfigMap<br/>front-config<br/>BANNER_TEXT: "Hello M2 IR"] -.valueFrom.-> PF[Pod front<br/>ENV: BANNER_TEXT]
+    CM["ConfigMap<br/>front-config<br/>BANNER_TEXT: Hello M2 IR"] -.valueFrom.-> PF["Pod front<br/>ENV: BANNER_TEXT"]
     
-    S[Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123] -.secretKeyRef.-> PA[Pod api<br/>ENV: DB_USER, DB_PASS]
+    S["Secret<br/>app-secrets<br/>DB_USER: app<br/>DB_PASS: changeMe123"] -.secretKeyRef.-> PA["Pod api<br/>ENV: DB_USER, DB_PASS"]
     
     style CM fill:#95E1D3,stroke:#2C3E50,stroke-width:3px,color:#000
     style S fill:#FFE66D,stroke:#2C3E50,stroke-width:3px,color:#000
